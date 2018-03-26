@@ -11,7 +11,7 @@ User = namedtuple('User', ['id', 'pw', 'page'])
 
 
 def init(driver=None):
-    driver = webdriver.Chrome('/Users/royce/Downloads/chromedriver')
+    driver = webdriver.Chrome('chromedriver')
 
     return driver
 
