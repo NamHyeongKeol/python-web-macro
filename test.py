@@ -30,10 +30,35 @@ def login(driver, user):
         submit_form = login_area.find_element_by_id('sir_ol_submit')
         submit_form.click()
 
+    elif user.page.name == 'bbasak':
+        id_form = driver.find_element_by_id('login_id')
+        pw_form = driver.find_element_by_id('login_pw')
+        id_form.send_keys(user.id)
+        pw_form.send_keys(user.pw)
+        btn_login = driver.find_element_by_class_name('btn_login')
+        btn_login.click()
+
+    elif user.page.name == 'phoneview':
+        id_form = driver.find_element_by_id('mb_id')
+        pw_form = driver.find_element_by_id('mb_password')
+        id_form.send_keys(user.id)
+        pw_form.send_keys(user.pw)
+        btn_login = driver.find_element_by_class_name('btn-block')
+        btn_login.click()
+
+    else:
+        return
+
 
 def logout(driver, user):
     if user.page.name == 'hogaeng':
         driver.get('https://hogaeng.co.kr/g4s/bbs/logout_pc_ssl.php')
+
+    elif user.page.name == 'bbasak':
+        driver.get('http://bbasak.com/bbs/logout.php')
+
+    elif user.page.name == 'phoneview':
+        pass
 
 
 def attendance_check(driver, user):
@@ -56,6 +81,24 @@ def attendance_check(driver, user):
         else:
             raise Exception
 
+    elif user.page.name == 'bbasak':
+        driver.get(user.page.url + '/bbs/write.php?bo_table=com25')
+        title = driver.find_element_by_name('wr_subject')
+        title.send_keys('출첵')
+        import ipdb; ipdb.set_trace()
+        img = driver.find_element_by_class_name('notice_img_warning').find_element_by_tag_name('img')
+        img.click()
+        iframe = driver.find_element_by_tag_name('iframe')
+        driver.switch_to_frame(iframe)
+        content = driver.find_element_by_class_name('cke_contents_ltr')
+        content.send_keys('출첵')
+        driver.switch_to_window('')
+        submit_btn = driver.find_element_by_id('submit_img')
+        submit_btn.click()
+
+
+
+
 
 def get_point(driver, user):
     driver.get(user.page.url)
@@ -65,6 +108,12 @@ def get_point(driver, user):
         point_tag = textl.find_element_by_class_name('ocolor')
 
         return point_tag.text
+
+    elif user.page.name == 'bbasak':
+        elem = driver.find_element_by_id('gm')
+        lis = elem.find_elements_by_tag_name('li')
+
+        return lis[3].text.split('\n')[1].split('/')[0]
 
 
 def db_connect():
