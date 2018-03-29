@@ -1,9 +1,13 @@
 import sqlite3
+import time
 
 
 from collections import namedtuple
 from selenium import webdriver
 from selenium.webdriver.common.alert import Alert
+from selenium.webdriver.common.touch_actions import TouchActions
+from selenium.webdriver.common.action_chains import ActionChains
+from selenium.common.exceptions import NoAlertPresentException
 
 
 Page = namedtuple('Page', ['name', 'url'])
@@ -58,7 +62,10 @@ def logout(driver, user):
         driver.get('http://bbasak.com/bbs/logout.php')
 
     elif user.page.name == 'phoneview':
-        pass
+        driver.get('http://myphoneview.com/bbs/logout.php')
+
+    else:
+        return
 
 
 def attendance_check(driver, user):
@@ -84,20 +91,42 @@ def attendance_check(driver, user):
     elif user.page.name == 'bbasak':
         driver.get(user.page.url + '/bbs/write.php?bo_table=com25')
         title = driver.find_element_by_name('wr_subject')
-        title.send_keys('출첵')
-        import ipdb; ipdb.set_trace()
-        img = driver.find_element_by_class_name('notice_img_warning').find_element_by_tag_name('img')
-        img.click()
+        title.send_keys('출석')
+        time.sleep(1)
         iframe = driver.find_element_by_tag_name('iframe')
         driver.switch_to_frame(iframe)
         content = driver.find_element_by_class_name('cke_contents_ltr')
-        content.send_keys('출첵')
+        content.send_keys('출석')
         driver.switch_to_window('')
+        chains = ActionChains(driver)
         submit_btn = driver.find_element_by_id('submit_img')
-        submit_btn.click()
+        chains.move_to_element(submit_btn).click().perform()
 
+    elif user.page.name == 'phoneview':
+        driver.get(user.page.url + '/bbs/board.php?bo_table=attendance')
+        chulsuk_book = driver.find_element_by_id('talk_submit')
+        chulsuk_book.click()
+        try:
+            message = Alert(driver).text
+        except NoAlertPresentException as e:
+            print('asdf')
+            return True
 
+        if message == '이미 출석하셨습니다.':
+            Alert(driver).accept()
 
+            return False
+
+        elif '축하합니다!' in message:
+            Alert(driver).accept()
+
+            return True
+
+        else:
+            raise Exception
+
+    else:
+        return
 
 
 def get_point(driver, user):
@@ -114,6 +143,14 @@ def get_point(driver, user):
         lis = elem.find_elements_by_tag_name('li')
 
         return lis[3].text.split('\n')[1].split('/')[0]
+
+    elif user.page.name == 'phoneview':
+        elem = driver.find_element_by_class_name('red')
+
+        return elem.text
+
+    else:
+        return
 
 
 def db_connect():
@@ -148,9 +185,15 @@ def main():
     driver = init()
 
     for user in user_list:
-        access(driver, user)
+        if user.page.url == driver.current_url:
+            pass
+        else:
+            access(driver, user)
         login(driver, user)
+        prepoint = get_point(driver, user)
         flag = attendance_check(driver, user)
-        print('{}\'s point : '.format(user.id), get_point(driver, user))
+        postpoint = get_point(driver, user)
+        print('{}: {}\'s point: {} -> {}'.format(user.page.name, user.id, prepoint, postpoint))
+        time.sleep(1)
         logout(driver, user) 
 
