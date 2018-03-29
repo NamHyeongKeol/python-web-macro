@@ -197,3 +197,4 @@ def main():
         time.sleep(1)
         logout(driver, user) 
 
+main()
